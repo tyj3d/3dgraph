@@ -1,13 +1,13 @@
 import * as THREE from 'three';
 
 /**
- * Function to create a plane with bloom effect.
+ * Function to create a plane with emissive bloom effect.
  * @param {number} size - Size of the plane.
  * @param {number} color - Color of the plane.
  * @returns {THREE.Mesh} - The plane object.
  */
-export function createPlaneWithBloom(size = 10, color = 0x88ccff) {
-    console.log('Creating a plane with emissive bloom effect');
+export function createPlaneWithBloom(size = 10, color = 0xFFFFFF ) {
+    console.log(`Creating a plane with size: ${size} and color: ${color.toString(16)}`);
 
     // Create a plane geometry
     const planeGeometry = new THREE.PlaneGeometry(size, size);
@@ -15,10 +15,10 @@ export function createPlaneWithBloom(size = 10, color = 0x88ccff) {
     // Shader material for the glowing plane
     const planeMaterial = new THREE.ShaderMaterial({
         uniforms: {
-            color: { value: new THREE.Color(color) },
+            color: { value: new THREE.Color(color) },  // Apply color
             opacity: { value: 0.9 },
-            emissiveColor: { value: new THREE.Color(color) },
-            emissiveIntensity: { value: 3.0 },
+            emissiveColor: { value: new THREE.Color(color) }, // Apply emissive color
+            emissiveIntensity: { value: 1.0 },
         },
         vertexShader: `
             varying vec2 vUv;
@@ -49,5 +49,7 @@ export function createPlaneWithBloom(size = 10, color = 0x88ccff) {
 
     // Create the plane mesh
     const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+
+    console.log('Plane with emissive bloom effect created successfully.');
     return plane;
 }
