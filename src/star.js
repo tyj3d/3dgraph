@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from '/three';
 
 export function createPlaneWithParticles(modelPath, planeSize, planeColor = 0xffffff, planeScale = 1, sphereScale = 1, emissionBrightness = 3) {
   const group = new THREE.Group();
