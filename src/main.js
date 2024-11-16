@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import ForceGraph3D from '3d-force-graph';
 import { createPlaneWithParticles } from '/src/star.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 
 const sizes = { width: window.innerWidth, height: window.innerHeight };
 
@@ -97,7 +100,39 @@ function addEnvironmentSphere(hdriPath, brightness = 1) {
 addEnvironmentSphere('./static/spaceStarsE.hdr', 1.5); // Replace with your HDRI path
 
 // Ensure renderer settings
-Graph.renderer().setPixelRatio(window.devicePixelRatio);
+const renderer = Graph.renderer();
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+
+// Add EffectComposer and BloomPass
+const composer = new EffectComposer(renderer);
+const renderPass = new RenderPass(scene, camera);
+composer.addPass(renderPass);
+
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+bloomPass.threshold = 0.07; // Adjust threshold for bloom
+bloomPass.strength = 0.1; // Adjust intensity of bloom
+bloomPass.radius = 0.8; // Adjust spread of bloom
+composer.addPass(bloomPass);
+
+// Add resize listener to adjust the scene
+window.addEventListener('resize', () => {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  // Update sizes
+  sizes.width = width;
+  sizes.height = height;
+
+  // Update camera
+  camera.aspect = width / height;
+  camera.updateProjectionMatrix();
+
+  // Update renderer and composer
+  renderer.setSize(width, height);
+  renderer.setPixelRatio(window.devicePixelRatio);
+  composer.setSize(width, height);
+});
 
 // Add a render loop to make planes face the camera
 function animate() {
@@ -110,6 +145,7 @@ function animate() {
     }
   });
 
-  Graph.renderer().render(scene, camera); // Render the scene
+  // Render the scene with bloom
+  composer.render();
 }
 animate();
