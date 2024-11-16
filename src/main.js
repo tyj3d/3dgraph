@@ -1,7 +1,7 @@
-import * as THREE from '/three';
-import ForceGraph3D from '/3d-force-graph';
+import * as THREE from 'three';
+import ForceGraph3D from '3d-force-graph';
 import { createPlaneWithParticles } from '/src/star.js';
-import { RGBELoader } from '/three/examples/jsm/loaders/RGBELoader.js';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 
 const sizes = { width: window.innerWidth, height: window.innerHeight };
 
