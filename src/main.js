@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import ForceGraph3D from '3d-force-graph';
-import { createPlaneWithParticles } from './star.js';
+import { createPlaneWithParticles } from '/src/star.js';
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 
 const sizes = { width: window.innerWidth, height: window.innerHeight };
@@ -8,7 +8,7 @@ const sizes = { width: window.innerWidth, height: window.innerHeight };
 // Create the 3D force graph
 const Graph = ForceGraph3D()(document.getElementById('graph-container'))
   .nodeThreeObject(node => {
-    const planeWithParticles = createPlaneWithParticles('/static/starmodels3.glb', 30, 0xff0000);
+    const planeWithParticles = createPlaneWithParticles('./static/starmodels3.glb', 30, 0xff0000);
     planeWithParticles.userData.nodeId = node.id; // Store node id for debugging or tracking
     return planeWithParticles;
   })
@@ -19,7 +19,7 @@ const Graph = ForceGraph3D()(document.getElementById('graph-container'))
 Graph.d3Force('link').distance(200);
 
 // Fetch miserables.json and set it as the graph data
-fetch('./datasets/miserables.json') // Ensure the file is in the correct path
+fetch('/datasets/miserables.json') // Ensure the file is in the correct path
   .then(response => {
     if (!response.ok) {
       throw new Error(`Failed to load miserables.json: ${response.statusText}`);
@@ -94,7 +94,7 @@ function addEnvironmentSphere(hdriPath, brightness = 1) {
 }
 
 // Add the HDRI environment sphere
-addEnvironmentSphere('/static/spaceStarsE.hdr', 1.5); // Replace with your HDRI path
+addEnvironmentSphere('./static/spaceStarsE.hdr', 1.5); // Replace with your HDRI path
 
 // Ensure renderer settings
 Graph.renderer().setPixelRatio(window.devicePixelRatio);
