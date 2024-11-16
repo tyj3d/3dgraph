@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import ForceGraph3D from '3d-force-graph';
 import { createPlaneWithParticles } from './star.js';
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
 
 const sizes = { width: window.innerWidth, height: window.innerHeight };
 
@@ -52,6 +53,48 @@ scene.add(directionalLight);
 const spotLight = new THREE.SpotLight(0xffffff, 0.5);
 spotLight.position.set(0, 100, 100);
 scene.add(spotLight);
+
+// Add environment sphere with HDRI
+function addEnvironmentSphere(hdriPath, brightness = 1) {
+  const sphereGeometry = new THREE.SphereGeometry(5000, 64, 64); // Large sphere for environment
+  const hdrLoader = new RGBELoader();
+
+  hdrLoader.load(hdriPath, texture => {
+    texture.mapping = THREE.EquirectangularReflectionMapping;
+
+    const sphereMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        uTexture: { value: texture },
+        uBrightness: { value: brightness },
+      },
+      vertexShader: `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform sampler2D uTexture;
+        uniform float uBrightness;
+        varying vec2 vUv;
+
+        void main() {
+          vec4 texColor = texture2D(uTexture, vUv);
+          gl_FragColor = vec4(texColor.rgb * uBrightness, texColor.a);
+        }
+      `,
+      side: THREE.BackSide, // Render the inside of the sphere
+      transparent: false,
+    });
+
+    const environmentSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+    scene.add(environmentSphere);
+  });
+}
+
+// Add the HDRI environment sphere
+addEnvironmentSphere('/static/spaceStarsE.hdr', 1.5); // Replace with your HDRI path
 
 // Ensure renderer settings
 Graph.renderer().setPixelRatio(window.devicePixelRatio);
