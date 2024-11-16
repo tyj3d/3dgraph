@@ -1,11 +1,51 @@
 import * as THREE from 'three';
 
-export function createPlaneWithParticles(modelPath, planeSize, planeColor, planeScale = 0.5, sphereScale = 2) {
+export function createPlaneWithParticles(modelPath, planeSize, planeColor = 0xffffff, planeScale = 0.5, sphereScale = 1, emissionBrightness = 3) {
   const group = new THREE.Group();
+
+  // Shader Material for the Plane
+  const planeMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+      uColor: { value: new THREE.Color(planeColor = 0xffffff) }, // Emissive color
+      uBrightness: { value: emissionBrightness }, // Brightness multiplier
+      uResolution: { value: new THREE.Vector2(planeSize, planeSize) },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+  
+      void main() {
+        vUv = uv; // Pass UV coordinates to the fragment shader
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uColor;
+      uniform float uBrightness;
+      varying vec2 vUv;
+  
+      void main() {
+        // Calculate distance from the center
+        float dist = distance(vUv, vec2(0.5));
+  
+        // Emissive intensity based on distance
+        float intensity = smoothstep(0.5, 0.0, dist) * uBrightness; // Brightness factor
+  
+        // Alpha for smooth transparency at edges
+        float alpha = smoothstep(0.5, 0.48, dist);
+  
+        // If alpha is too low, discard the fragment
+        if (alpha < 0.01) discard;
+  
+        // Set color with emissive effect and alpha
+        gl_FragColor = vec4(uColor * intensity, alpha);
+      }
+    `,
+    transparent: true, // Enable transparency
+    blending: THREE.AdditiveBlending, // Additive blending for smooth glow effect
+  });
 
   // Plane
   const planeGeometry = new THREE.PlaneGeometry(planeSize, planeSize);
-  const planeMaterial = new THREE.MeshBasicMaterial({ color: planeColor });
   const plane = new THREE.Mesh(planeGeometry, planeMaterial);
 
   // Apply the scale to the plane only
@@ -36,7 +76,7 @@ export function createPlaneWithParticles(modelPath, planeSize, planeColor, plane
     positions[i * 3 + 2] = z;
 
     // Randomize the size of each particle
-    sizes[i] = Math.random() * 4 + 2; // Particle size between 0.5 and 2.5
+    sizes[i] = Math.random() * 2.0 + 0.5; // Particle size between 0.5 and 2.5
   }
 
   particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -79,7 +119,7 @@ export function createPlaneWithParticles(modelPath, planeSize, planeColor, plane
   const particles = new THREE.Points(particleGeometry, particleMaterial);
   group.add(particles);
 
-  console.log(`Group created with sphere scale: ${sphereScale}`, group); // Debugging
+  console.log(`Group created with plane scale: ${planeScale}`, group); // Debugging
 
   return group; // Synchronously return the group
 }
