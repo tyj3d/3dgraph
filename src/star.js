@@ -3,6 +3,15 @@ import * as THREE from 'three';
 // Shared TextureLoader instance for caching
 const sharedTextureLoader = new THREE.TextureLoader();
 
+// Utility function to generate an array of random colors
+function generateRandomColors(count) {
+  const colors = [];
+  for (let i = 0; i < count; i++) {
+    colors.push(new THREE.Color(Math.random(), Math.random(), Math.random()));
+  }
+  return colors;
+}
+
 export function createPlaneWithParticles(
   modelPath,
   planeSize,
@@ -17,11 +26,18 @@ export function createPlaneWithParticles(
   // Load point texture using the provided texture loader
   const pointTexture = textureLoader.load('https://threejs.org/examples/textures/sprites/circle.png');
 
+  // Generate 4 random emissive colors
+  const emissiveColors = generateRandomColors(4);
+
+  // Select one emissive color randomly from the four
+  const selectedEmissiveColor = emissiveColors[Math.floor(Math.random() * emissiveColors.length)];
+
   // Plane Material
   const planeMaterial = new THREE.ShaderMaterial({
     uniforms: {
-      uColor: { value: new THREE.Color(planeColor) }, // Emissive color
+      uColor: { value: new THREE.Color(planeColor) }, // Base color
       uBrightness: { value: emissionBrightness }, // Brightness multiplier
+      uEmissiveColor: { value: selectedEmissiveColor }, // Selected emissive color
     },
     vertexShader: `
       varying vec2 vUv;
@@ -33,13 +49,18 @@ export function createPlaneWithParticles(
     fragmentShader: `
       uniform vec3 uColor;
       uniform float uBrightness;
+      uniform vec3 uEmissiveColor;
       varying vec2 vUv;
+
       void main() {
         // Calculate distance from the center
         float dist = distance(vUv, vec2(0.5));
 
         // Emissive intensity based on distance
         float intensity = smoothstep(0.0, 0.5, 0.5 - dist) * uBrightness;
+
+        // Apply the selected emissive color
+        vec3 emissive = uEmissiveColor * intensity;
 
         // Alpha for smooth transparency at edges
         float alpha = smoothstep(0.5, 0.48, 0.5 - dist);
@@ -48,7 +69,7 @@ export function createPlaneWithParticles(
         if (alpha <= 0.01) discard;
 
         // Set color with emissive effect and alpha
-        gl_FragColor = vec4(uColor * intensity, alpha);
+        gl_FragColor = vec4(uColor * intensity + emissive, alpha);
       }
     `,
     transparent: true,
@@ -96,12 +117,15 @@ export function createPlaneWithParticles(
   const particleMaterial = new THREE.ShaderMaterial({
     uniforms: {
       pointTexture: { value: pointTexture },
+      uEmissiveColor: { value: selectedEmissiveColor }, // Shared emissive color
     },
     vertexShader: `
       attribute float size;
-      varying float vSize;
+      uniform vec3 uEmissiveColor;
+      varying vec3 vEmissive;
+
       void main() {
-        vSize = size; // Pass size to fragment shader
+        vEmissive = uEmissiveColor; // Pass emissive color to fragment shader
         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
         gl_PointSize = size * (300.0 / -mvPosition.z);
         gl_Position = projectionMatrix * mvPosition;
@@ -109,14 +133,17 @@ export function createPlaneWithParticles(
     `,
     fragmentShader: `
       uniform sampler2D pointTexture;
-      varying float vSize;
+      varying vec3 vEmissive;
+
       void main() {
         vec4 textureColor = texture2D(pointTexture, gl_PointCoord);
         if (textureColor.a < 0.5) discard; // Discard transparent parts of the texture
-        gl_FragColor = textureColor;
+        gl_FragColor = vec4(vEmissive, textureColor.a);
       }
     `,
     transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
   });
 
   const particles = new THREE.Points(particleGeometry, particleMaterial);
