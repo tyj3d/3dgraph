@@ -134,7 +134,7 @@ function addEnvironmentSphere(hdriPath, brightness = 1) {
 }
 
 // Add the HDRI environment sphere
-addEnvironmentSphere('./static/spaceStarsE.hdr', 1.0); // Replace with your HDRI path
+addEnvironmentSphere('./static/spaceStarsE2.hdr', 5.0); // Replace with your HDRI path
 
 // Ensure renderer settings
 const renderer = Graph.renderer();
