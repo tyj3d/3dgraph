@@ -18,7 +18,7 @@ export function createPlaneWithParticles(
   modelPath,
   planeSize,
   planeColor,
-  emissionBrightness = 3,
+  emissionBrightness = .6,
   textureLoader = sharedTextureLoader // Default to shared loader
 ) {
   const group = new THREE.Group();
